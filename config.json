@@ -3,5 +3,5 @@
   "kokoro_lang_code": "a",
   "sample_rate": 24000,
   "dropbox_folder": "/Exchange/pdf_to_voice",
-  "output_filename": "audio.wav"
+  "output_filename": "audio.mp3"
 }

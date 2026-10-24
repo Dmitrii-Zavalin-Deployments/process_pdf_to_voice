@@ -45,9 +45,9 @@ else
     echo "pip is already installed."
 fi
 
-# Install system dependencies required by Kokoro phonemizer (espeak-ng)
-echo "Installing system dependencies (espeak-ng)..."
-sudo apt-get update && sudo apt-get install -y espeak-ng
+# Install system dependencies required by Kokoro (espeak-ng) and audio conversion (ffmpeg)
+echo "Installing system dependencies (espeak-ng, ffmpeg)..."
+sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
 
 # Install Python dependencies for Kokoro AI speech synthesis
 echo "Installing Kokoro AI and audio packages..."
@@ -75,7 +75,7 @@ mkdir -p "$AUDIO_OUTPUT_DIR"
 
 echo "Converting merged PDF into natural speech audio via Kokoro..."
 
-# Run Python script to read config.json, extract text, combine audio chunks, and save using configured filename
+# Run Python script to read config.json, extract text, combine chunks, and save
 python3 -u - <<EOF
 import os
 import json
@@ -92,7 +92,7 @@ config_path = "config.json"
 voice = "af_heart"
 lang_code = "a"
 sample_rate = 24000
-output_filename = "audio.wav"
+output_filename = "audio.mp3"
 
 # Load configuration from config.json if present
 if os.path.exists(config_path):
@@ -134,9 +134,23 @@ for i, (gs, ps, audio) in enumerate(generator):
 
 if all_audio_chunks:
     combined_audio = np.concatenate(all_audio_chunks)
-    output_filepath = os.path.join(output_folder, output_filename)
-    sf.write(output_filepath, combined_audio, sample_rate)
-    print(f"   Saved unified audio file: {output_filepath}")
+    
+    # If target is MP3, we temporarily write a WAV file and use ffmpeg to encode it to MP3 cleanly
+    base_name, ext = os.path.splitext(output_filename)
+    temp_wav_path = os.path.join(output_folder, f"{base_name}_temp.wav")
+    final_output_path = os.path.join(output_folder, output_filename)
+
+    sf.write(temp_wav_path, combined_audio, sample_rate)
+
+    if ext.lower() == ".mp3":
+        print(f" -> Converting temporary WAV to universal MP3 format via ffmpeg...")
+        os.system(f"ffmpeg -y -i '{temp_wav_path}' -codec:a libmp3lame -qscale:a 2 '{final_output_path}' >/dev/null 2>&1")
+        if os.path.exists(temp_wav_path):
+            os.remove(temp_wav_path)
+    else:
+        os.rename(temp_wav_path, final_output_path)
+
+    print(f"   Saved final audio file: {final_output_path}")
 else:
     print(" -> Warning: No audio was generated from the text.")
 
