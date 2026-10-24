@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Function to check if a command exists
 command_exists() {
@@ -23,7 +24,7 @@ fi
 
 # Check if the directory exists
 if [[ ! -d "$pdf_dir" ]]; then
-    echo "Directory not found!"
+    echo "ERROR: Directory not found: $pdf_dir"
     exit 1
 fi
 
@@ -32,12 +33,14 @@ pdf_files=("$pdf_dir"/*.pdf)
 
 # Check if there are any PDF files in the directory
 if [ ${#pdf_files[@]} -eq 0 ]; then
-    echo "No PDF files found in the directory!"
+    echo "ERROR: No PDF files found in the directory!"
     exit 1
 fi
 
 # Define the output merged PDF file
 merged_pdf="$pdf_dir/merged.pdf"
+
+echo "Merging ${#pdf_files[@]} PDF file(s) into '$merged_pdf'..."
 
 # Merge all PDF files into one
 pdftk "${pdf_files[@]}" cat output "$merged_pdf"
@@ -45,12 +48,12 @@ pdftk "${pdf_files[@]}" cat output "$merged_pdf"
 # Check if the merge was successful
 if [ $? -eq 0 ]; then
     echo "Merged PDF created successfully: $merged_pdf"
-    # Delete the original PDF files
+    # Delete the original source PDF files so only merged.pdf remains for processing
     rm "${pdf_files[@]}"
-    echo "Original PDF files deleted."
+    echo "Original source PDF files cleaned up."
 else
-    echo "Failed to merge PDF files."
+    echo "ERROR: Failed to merge PDF files."
     exit 1
 fi
 
-echo "Operation completed successfully."
+echo "PDFMerge operation completed successfully."

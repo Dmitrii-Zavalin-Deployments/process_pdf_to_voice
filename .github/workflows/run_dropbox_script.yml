@@ -1,4 +1,4 @@
-name: run process_pdf_to_text script
+name: Run PDF to Natural Speech Dropbox Pipeline
 
 on:
   workflow_dispatch: # Enables manual trigger via "Run workflow" button
@@ -16,24 +16,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: '3.10'
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: |
-          pip install dropbox requests
+      # Step 3: Grant execution permissions for the shell scripts
+      - name: Make scripts executable
+        run: chmod +x ./main.sh ./process_downloaded_pdfs.sh ./PDFMerge.sh
 
-      # Step 4: Grant execution permissions for the shell script
-      - name: Make main.sh executable
-        run: chmod +x ./main.sh
-
-      # Step 5: Run the main.sh script
+      # Step 4: Run the main.sh script
       - name: Run main.sh
         env:
           APP_KEY: ${{ secrets.APP_KEY }}
           APP_SECRET: ${{ secrets.APP_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
         run: ./main.sh
-
-
-

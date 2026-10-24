@@ -65,7 +65,7 @@ def download_pdfs_from_dropbox(dropbox_folder, local_folder, refresh_token, clie
                                 metadata, res = dbx.files_download(path=entry.path_lower)
                                 f.write(res.content)
                             log_file.write(f"Downloaded {entry.name} to {local_path}\n")
-                            print(entry.name)  # Print only the name of the downloaded file to GitHub Actions logs
+                            print(f"Downloaded PDF: {entry.name}")  # Print to GitHub Actions logs
 
                             # Delete the file from Dropbox after downloading
                             delete_file_from_dropbox(dbx, entry.path_lower, log_file)
@@ -83,6 +83,10 @@ def download_pdfs_from_dropbox(dropbox_folder, local_folder, refresh_token, clie
 
 # Entry point for the script
 if __name__ == "__main__":
+    if len(sys.argv) < 6:
+        print("Usage: python download_from_dropbox.py <dropbox_folder> <local_folder> <refresh_token> <client_id> <client_secret> <log_file_path>")
+        sys.exit(1)
+
     # Read command-line arguments
     dropbox_folder = sys.argv[1]  # Dropbox folder path
     local_folder = sys.argv[2]  # Local folder path
@@ -93,6 +97,3 @@ if __name__ == "__main__":
 
     # Call the function
     download_pdfs_from_dropbox(dropbox_folder, local_folder, refresh_token, client_id, client_secret, log_file_path)
-
-
-

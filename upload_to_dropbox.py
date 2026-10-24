@@ -33,28 +33,35 @@ def upload_file_to_dropbox(local_file_path, dropbox_file_path, refresh_token, cl
 
 # Entry point for the script
 if __name__ == "__main__":
-    # Command-line arguments
-    local_directory = "./downloaded_pdfs"          # Path to the directory containing .txt files
-    dropbox_folder = "/Exchange/WebsitesToPdf"     # Dropbox folder path
-    refresh_token = sys.argv[1]                    # Dropbox refresh token
-    client_id = sys.argv[2]                        # Dropbox client ID
-    client_secret = sys.argv[3]                    # Dropbox client secret
-
-    # Check if the local directory exists
-    if not os.path.isdir(local_directory):
-        print(f"Directory {local_directory} does not exist. Please ensure the directory is available.")
+    if len(sys.argv) < 4:
+        print("Usage: python upload_to_dropbox.py <refresh_token> <client_id> <client_secret>")
         sys.exit(1)
 
-    # Iterate through all .txt files in the directory
-    for file_name in os.listdir(local_directory):
-        if file_name.endswith(".txt"):
-            local_file_path = os.path.join(local_directory, file_name)
+    # Command-line arguments
+    audio_directory = "./downloaded_pdfs/audio_output"  # Path containing generated .wav files
+    dropbox_folder = "/Exchange/WebsitesToPdf"          # Dropbox folder path
+    refresh_token = sys.argv[1]                         # Dropbox refresh token
+    client_id = sys.argv[2]                             # Dropbox client ID
+    client_secret = sys.argv[3]                         # Dropbox client secret
+
+    # Check if the local audio directory exists
+    if not os.path.isdir(audio_directory):
+        print(f"Directory {audio_directory} does not exist. Please ensure audio has been generated.")
+        sys.exit(1)
+
+    uploaded_count = 0
+
+    # Iterate through all .wav audio files in the directory and upload them
+    for file_name in os.listdir(audio_directory):
+        if file_name.endswith(".wav"):
+            local_file_path = os.path.join(audio_directory, file_name)
             dropbox_file_path = f"{dropbox_folder}/{file_name}"
 
-            # Call the upload function for each file
+            # Call the upload function for each audio track
             upload_file_to_dropbox(local_file_path, dropbox_file_path, refresh_token, client_id, client_secret)
+            uploaded_count += 1
 
-    print("All .txt files have been uploaded to Dropbox.")
-
-
-
+    if uploaded_count > 0:
+        print(f"All {uploaded_count} natural speech audio .wav files have been uploaded to Dropbox!")
+    else:
+        print("No .wav audio files found to upload.")

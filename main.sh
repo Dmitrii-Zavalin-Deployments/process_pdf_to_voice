@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Set environment variables from GitHub Actions secrets
 APP_KEY=${APP_KEY}
@@ -11,26 +12,36 @@ LOG_FILE="./action_log.txt"
 # Create the local folder if it doesn't exist
 mkdir -p $LOCAL_FOLDER
 
-# Run the Python script to call the download function
+echo "------------------------------------------------------------"
+echo "Step 1: Downloading PDFs from Dropbox..."
+echo "------------------------------------------------------------"
 python3 download_from_dropbox.py "$DROPBOX_FOLDER" "$LOCAL_FOLDER" "$REFRESH_TOKEN" "$APP_KEY" "$APP_SECRET" "$LOG_FILE"
 
-# Run the additional processing shell script
+echo ""
+echo "------------------------------------------------------------"
+echo "Step 2: Processing PDFs into Natural Speech Audio via Kokoro..."
+echo "------------------------------------------------------------"
+# Run the processing/conversion script
 if [ -x ./process_downloaded_pdfs.sh ]; then
-    echo "Running process_downloaded_pdfs.sh..."
     ./process_downloaded_pdfs.sh
 else
-    echo "process_downloaded_pdfs.sh is not found or not executable."
+    echo "ERROR: process_downloaded_pdfs.sh is not found or not executable."
     exit 1
 fi
 
-# Run the upload script to replace or create merged.txt in Dropbox
+echo ""
+echo "------------------------------------------------------------"
+echo "Step 3: Uploading generated audio files back to Dropbox..."
+echo "------------------------------------------------------------"
+# Run the upload script to send generated audio tracks (.wav) back to Dropbox
 if [ -f ./upload_to_dropbox.py ]; then
-    echo "Running upload_to_dropbox.py to upload merged.txt..."
     python3 upload_to_dropbox.py "$REFRESH_TOKEN" "$APP_KEY" "$APP_SECRET"
 else
-    echo "upload_to_dropbox.py is not found."
+    echo "ERROR: upload_to_dropbox.py is not found."
     exit 1
 fi
 
-
-
+echo ""
+echo "------------------------------------------------------------"
+echo "Pipeline execution completed successfully!"
+echo "------------------------------------------------------------"
