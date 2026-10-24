@@ -75,10 +75,11 @@ mkdir -p "$AUDIO_OUTPUT_DIR"
 
 echo "Converting merged PDF into natural speech audio via Kokoro..."
 
-# Run Python script to read config.json, extract text, combine chunks, and save
+# Run Python script to read config.json, extract text, apply natural pauses, combine chunks, and save
 python3 -u - <<EOF
 import os
 import json
+import re
 import numpy as np
 from pypdf import PdfReader
 from kokoro import KPipeline
@@ -121,6 +122,14 @@ for page_num, page in enumerate(reader.pages):
         full_text += text + "\n"
 
 print(f" -> Text extraction complete. Total length: {len(full_text)} characters.")
+
+# --- Text Pre-processing for Natural Pauses & Cadence ---
+print(" -> Applying text normalization for natural speech pauses...")
+# Ensure proper spacing after punctuation marks if PDF text is jammed together
+full_text = re.sub(r'(?<=[.!?])(?=[A-Z])', ' ', full_text)
+# Normalize multiple consecutive newlines into clean paragraph breaks for natural breathing room
+full_text = re.sub(r'\n\s*\n', '\n\n', full_text)
+# --------------------------------------------------------
 
 print(f" -> Initializing Kokoro AI Pipeline (Lang code: {lang_code})...")
 pipeline = KPipeline(lang_code=lang_code)
