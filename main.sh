@@ -8,6 +8,11 @@ REFRESH_TOKEN=${REFRESH_TOKEN}
 LOCAL_FOLDER="./downloaded_pdfs" # Set your local folder
 LOG_FILE="./action_log.txt"
 
+# Install Python dependencies required for downloading/uploading
+echo "Installing Python dependencies (dropbox, requests)..."
+python3 -m pip install --upgrade pip --quiet
+python3 -m pip install -q dropbox requests
+
 # Read dropbox_folder dynamically from config.json (with fallback)
 CONFIG_FILE="config.json"
 if [ -f "$CONFIG_FILE" ]; then
@@ -42,7 +47,7 @@ echo ""
 echo "------------------------------------------------------------"
 echo "Step 3: Uploading generated audio files back to Dropbox..."
 echo "------------------------------------------------------------"
-# Run the upload script to send generated audio tracks (.wav) back to Dropbox
+# Run the upload script to send generated audio tracks back to Dropbox
 if [ -f ./upload_to_dropbox.py ]; then
     python3 upload_to_dropbox.py "$REFRESH_TOKEN" "$APP_KEY" "$APP_SECRET"
 else
