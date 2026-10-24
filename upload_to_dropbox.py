@@ -1,4 +1,5 @@
 import dropbox
+import json
 import os
 import requests
 import sys
@@ -39,10 +40,20 @@ if __name__ == "__main__":
 
     # Command-line arguments
     audio_directory = "./downloaded_pdfs/audio_output"  # Path containing generated .wav files
-    dropbox_folder = "/Exchange/WebsitesToPdf"          # Dropbox folder path
     refresh_token = sys.argv[1]                         # Dropbox refresh token
     client_id = sys.argv[2]                             # Dropbox client ID
     client_secret = sys.argv[3]                         # Dropbox client secret
+
+    # Read dropbox_folder dynamically from config.json (with fallback)
+    config_path = "config.json"
+    dropbox_folder = "/Exchange/pdf_to_voice"
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                dropbox_folder = config.get("dropbox_folder", dropbox_folder)
+        except Exception as e:
+            print(f"Warning: Could not read {config_path} for upload destination ({e}), using default: {dropbox_folder}")
 
     # Check if the local audio directory exists
     if not os.path.isdir(audio_directory):

@@ -5,9 +5,18 @@ set -e
 APP_KEY=${APP_KEY}
 APP_SECRET=${APP_SECRET}
 REFRESH_TOKEN=${REFRESH_TOKEN}
-DROPBOX_FOLDER="/Exchange/WebsitesToPdf" # Set your Dropbox folder
 LOCAL_FOLDER="./downloaded_pdfs" # Set your local folder
 LOG_FILE="./action_log.txt"
+
+# Read dropbox_folder dynamically from config.json (with fallback)
+CONFIG_FILE="config.json"
+if [ -f "$CONFIG_FILE" ]; then
+    DROPBOX_FOLDER=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('dropbox_folder', '/Exchange/pdf_to_voice'))")
+else
+    DROPBOX_FOLDER="/Exchange/pdf_to_voice"
+fi
+
+echo "Using Dropbox folder: $DROPBOX_FOLDER"
 
 # Create the local folder if it doesn't exist
 mkdir -p $LOCAL_FOLDER
