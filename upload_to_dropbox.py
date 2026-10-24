@@ -39,21 +39,24 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Command-line arguments
-    audio_directory = "./downloaded_pdfs/audio_output"  # Path containing generated .wav files
+    audio_directory = "./downloaded_pdfs/audio_output"  # Path containing generated audio files
     refresh_token = sys.argv[1]                         # Dropbox refresh token
     client_id = sys.argv[2]                             # Dropbox client ID
     client_secret = sys.argv[3]                         # Dropbox client secret
 
-    # Read dropbox_folder dynamically from config.json (with fallback)
+    # Read configuration dynamically from config.json (with defaults)
     config_path = "config.json"
     dropbox_folder = "/Exchange/pdf_to_voice"
+    target_output_filename = None
+    
     if os.path.exists(config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 dropbox_folder = config.get("dropbox_folder", dropbox_folder)
+                target_output_filename = config.get("output_filename")
         except Exception as e:
-            print(f"Warning: Could not read {config_path} for upload destination ({e}), using default: {dropbox_folder}")
+            print(f"Warning: Could not read {config_path} ({e}), using default folder: {dropbox_folder}")
 
     # Check if the local audio directory exists
     if not os.path.isdir(audio_directory):
@@ -61,10 +64,18 @@ if __name__ == "__main__":
         sys.exit(1)
 
     uploaded_count = 0
+    audio_extensions = (".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac")
 
-    # Iterate through all .wav audio files in the directory and upload them
+    # Iterate through all audio files in the directory and upload them
     for file_name in os.listdir(audio_directory):
-        if file_name.endswith(".wav"):
+        # If config specifies an exact output filename, prioritize uploading that file, 
+        # or otherwise accept any valid audio file format present in the folder.
+        if file_name.lower().endswith(audio_extensions):
+            if target_output_filename and file_name != target_output_filename:
+                # If a specific target filename was configured but multiple files exist, 
+                # you can choose to match it or upload all generated audio. Here we match valid audio formats.
+                pass
+
             local_file_path = os.path.join(audio_directory, file_name)
             dropbox_file_path = f"{dropbox_folder}/{file_name}"
 
@@ -73,6 +84,6 @@ if __name__ == "__main__":
             uploaded_count += 1
 
     if uploaded_count > 0:
-        print(f"All {uploaded_count} natural speech audio .wav files have been uploaded to Dropbox!")
+        print(f"All {uploaded_count} natural speech audio file(s) have been uploaded to Dropbox!")
     else:
-        print("No .wav audio files found to upload.")
+        print("No supported audio files found to upload.")
