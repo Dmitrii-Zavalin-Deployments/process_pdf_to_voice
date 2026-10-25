@@ -40,17 +40,23 @@ fi
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv
 
-# --- 100% AIR-GAPPED ISOLATED VENV & OFFLINE INSTALLATION ---
+# --- 100% AIR-GAPPED ISOLATED VENV & STAGED OFFLINE INSTALLATION ---
 echo "Creating isolated virtual environment to block global pollution..."
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
 
-echo "Installing Python dependencies completely offline from ./vendor into .venv..."
+echo "Upgrading pip completely offline inside .venv..."
 python3 -m pip install --upgrade pip --quiet
 
 if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
-    # Install everything strictly from vendor wheelhouse into the isolated venv
-    python3 -m pip install --no-index --find-links=./vendor -q numpy==1.26.4 torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
+    # Step 1: Force install NumPy 1.26.4 first to lock in the 1.x C-API headers
+    python3 -m pip install --no-index --find-links=./vendor -q numpy==1.26.4
+    
+    # Step 2: Install core runtime dependencies
+    python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio pypdf requests dropbox soundfile misaki kokoro
+    
+    # Step 3: Install spacy and the model under the strict NumPy 1.x constraint boundary
+    python3 -m pip install --no-index --find-links=./vendor -q spacy==3.7.5 en-core-web-sm
 else
     echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
     exit 1
