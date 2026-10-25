@@ -45,14 +45,14 @@ echo "Creating isolated virtual environment..."
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
 
-echo "Upgrading pip and pre-installing Cython 3.x for modern NumPy header compatibility..."
-python3 -m pip install --upgrade pip "cython>=3.0" --quiet
+echo "Upgrading pip and installing Cython 3.x and NumPy 1.26.4..."
+python3 -m pip install --upgrade pip "cython>=3.0" numpy==1.26.4 --quiet
 
-echo "Installing base packages live from PyPI..."
-python3 -m pip install torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 "weasel<0.4.0"
+echo "Installing base runtime dependencies..."
+python3 -m pip install torch torchaudio misaki kokoro soundfile pypdf requests dropbox "weasel<0.4.0"
 
-echo "Forcing local source build and compilation for spaCy and its C-extensions against NumPy 1.26.4 headers..."
-python3 -m pip install --no-binary spacy --no-binary thinc --no-binary blis spacy==3.7.5
+echo "Forcing local compilation against NumPy 1.26.4 without build isolation..."
+python3 -m pip install --no-binary spacy --no-binary thinc --no-binary blis --no-build-isolation spacy==3.7.5
 
 echo "Installing matching spaCy model (v3.7.0)..."
 python3 -m pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
