@@ -38,9 +38,9 @@ fi
 
 # Install system dependencies required by Kokoro (espeak-ng) and audio conversion (ffmpeg)
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
-sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv
+sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv build-essential python3-dev
 
-# --- LIVE ONLINE INSTALLATION & VERSION AUDIT ---
+# --- LIVE ONLINE INSTALLATION, COMPILATION & WHEEL HARVESTING ---
 echo "Creating isolated virtual environment..."
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
@@ -48,23 +48,28 @@ export PATH="$(pwd)/.venv/bin:$PATH"
 echo "Upgrading pip..."
 python3 -m pip install --upgrade pip --quiet
 
-echo "Installing packages live from PyPI..."
-python3 -m pip install torch torchaudio spacy==3.7.5 "weasel<0.4.0" misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4
+echo "Installing base packages live from PyPI..."
+python3 -m pip install torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 "weasel<0.4.0"
+
+echo "Forcing local source build and compilation for spaCy and its C-extensions against NumPy 1.26.4 headers..."
+python3 -m pip install --no-binary spacy --no-binary thinc --no-binary blis spacy==3.7.5
 
 echo "Installing matching spaCy model (v3.7.0)..."
 python3 -m pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
 
+# --- AUTOMATED VENDOR HARVESTING ---
+echo "Harvesting all compiled and downloaded wheels into ./vendor/ for Git LFS..."
+mkdir -p ./vendor
+# Grab wheels built or downloaded in pip cache / current workspace and copy to vendor
+python3 -m pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy spacy thinc blis weasel --wheel-dir ./vendor/ || true
+
 echo "========================================================="
-echo " AUDIT LOG: EXACT INSTALLED PACKAGE VERSIONS:"
+echo " AUDIT LOG: HARVESTED WHEELS IN ./vendor/:"
 echo "========================================================="
-python3 -m pip list
-echo "========================================================="
-echo " AUDIT LOG: PIP FREEZE SPECIFIERS:"
-echo "========================================================="
-python3 -m pip freeze
+ls -lh ./vendor/
 echo "========================================================="
 
-# Verify spaCy model loads successfully with the live-resolved packages
+# Verify spaCy model loads successfully 
 echo "Verifying spaCy model loading..."
 if python3 -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
     echo "spaCy model 'en_core_web_sm' loaded successfully!"
