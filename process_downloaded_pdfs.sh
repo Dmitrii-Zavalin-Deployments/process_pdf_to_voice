@@ -48,11 +48,11 @@ export PATH="$(pwd)/.venv/bin:$PATH"
 echo "Upgrading pip..."
 python3 -m pip install --upgrade pip --quiet
 
-echo "Installing packages live from PyPI to let pip resolve a working dependency tree..."
-python3 -m pip install torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox
+echo "Installing packages live from PyPI..."
+python3 -m pip install torch torchaudio spacy==3.7.5 weasel<0.4.0 misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4
 
-echo "Installing spaCy model en-core-web-sm..."
-python3 -m spacy download en_core_web_sm
+echo "Installing matching spaCy model (v3.7.0)..."
+python3 -m pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
 
 echo "========================================================="
 echo " AUDIT LOG: EXACT INSTALLED PACKAGE VERSIONS:"
