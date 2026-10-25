@@ -61,11 +61,22 @@ mkdir -p ./vendor
 
 python3 -m pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
 
+# Also copy the model wheel if present or download it into vendor for complete air-gapped coverage
+if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
+    python3 -m pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/ || true
+fi
+
 echo "========================================================="
 echo " AUDIT LOG: HARVESTED WHEELS IN ./vendor/:"
 echo "========================================================="
 ls -lh ./vendor/
 echo "========================================================="
+
+# --- FORCE RE-INSTALLATION FROM LOCAL VENDOR CACHE TO GUARANTEE ZERO DRIFT ---
+echo "Re-installing strictly from local ./vendor/ cache to verify air-gapped integrity..."
+python3 -m pip uninstall -y numpy spacy thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox || true
+python3 -m pip install --no-index --find-links=./vendor/ numpy spacy thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox
+python3 -m pip install --no-index --find-links=./vendor/ en_core_web_sm
 
 # Verify spaCy model loads successfully 
 echo "Verifying spaCy model loading..."
