@@ -10,21 +10,25 @@ jobs:
     steps:
       # Step 1: Checkout the repository with Git LFS enabled for the vendor folder
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           lfs: true
 
-      # Step 2: Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+      # Step 2: Explicitly pull LFS objects to materialize binaries on the runner
+      - name: Pull Git LFS binaries
+        run: git lfs pull
 
-      # Step 3: Grant execution permissions for the shell scripts
+      # Step 3: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' # Matches the Python 3.12 wheel cache environment
+
+      # Step 4: Grant execution permissions for the shell scripts
       - name: Make scripts executable
         run: chmod +x ./main.sh ./process_downloaded_pdfs.sh ./PDFMerge.sh
 
-      # Step 4: Run the main.sh script
+      # Step 5: Run the main.sh script
       - name: Run main.sh
         env:
           APP_KEY: ${{ secrets.APP_KEY }}
