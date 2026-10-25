@@ -49,7 +49,7 @@ echo "Upgrading pip..."
 python3 -m pip install --upgrade pip --quiet
 
 echo "Installing packages live from PyPI..."
-python3 -m pip install torch torchaudio spacy==3.7.5 weasel<0.4.0 misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4
+python3 -m pip install torch torchaudio spacy==3.7.5 "weasel<0.4.0" misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4
 
 echo "Installing matching spaCy model (v3.7.0)..."
 python3 -m pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
