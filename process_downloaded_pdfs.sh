@@ -43,27 +43,27 @@ sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv bui
 # --- LIVE ONLINE INSTALLATION & BINARY WHEEL HARVESTING ---
 echo "Creating initial virtual environment..."
 python3 -m venv .venv
-export PATH="$(pwd)/.venv/bin:$PATH"
+source .venv/bin/activate
 
 echo "Upgrading pip..."
-python3 -m pip install --upgrade pip --quiet
+pip install --upgrade pip --quiet
 
 echo "Installing stable pre-built binary wheels strictly locked to NumPy 1.26.4..."
-python3 -m pip install numpy==1.26.4 spacy==3.7.5 "weasel<0.4.0" torch torchaudio misaki kokoro soundfile pypdf requests dropbox
+pip install numpy==1.26.4 spacy==3.7.5 "weasel<0.4.0" torch torchaudio misaki kokoro soundfile pypdf requests dropbox
 
 echo "Installing matching spaCy model (v3.7.0)..."
-python3 -m pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
+pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
 
 # --- AUTOMATED VENDOR HARVESTING (CLEAN & RE-HARVEST) ---
 echo "Cleaning old vendor wheels and harvesting fresh NumPy 1.26.4 compatible set into ./vendor/..."
 rm -rf ./vendor
 mkdir -p ./vendor
 
-python3 -m pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
+pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
 
 # Also download the model wheel into vendor for complete air-gapped coverage
 if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
-    python3 -m pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/ || true
+    pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/ || true
 fi
 
 echo "========================================================="
@@ -74,21 +74,21 @@ echo "========================================================="
 
 # --- PURGE VENV AND RE-INSTALL STRICTLY FROM LOCAL VENDOR CACHE ---
 echo "Wiping virtual environment to ensure zero stale cache contamination..."
+deactivate || true
 rm -rf .venv
 python3 -m venv .venv
-export PATH="$(pwd)/.venv/bin:$PATH"
-hash -r # Refresh bash command path cache for the new venv python
+source .venv/bin/activate
 
 echo "Upgrading pip in clean venv..."
-python3 -m pip install --upgrade pip --quiet
+pip install --upgrade pip --quiet
 
 echo "Re-installing strictly from local ./vendor/ cache..."
-python3 -m pip install --no-index --find-links=./vendor/ numpy spacy thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox
-python3 -m pip install --no-index --find-links=./vendor/ en_core_web_sm
+pip install --no-index --find-links=./vendor/ numpy spacy thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox
+pip install --no-index --find-links=./vendor/ en_core_web_sm
 
 # Verify spaCy model loads successfully 
 echo "Verifying spaCy model loading..."
-if python3 -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
+if python -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
     echo "spaCy model 'en_core_web_sm' loaded successfully!"
 else
     echo "ERROR: spaCy model could not be loaded."
@@ -117,7 +117,7 @@ mkdir -p "$AUDIO_OUTPUT_DIR"
 echo "Converting merged PDF into natural speech audio via Kokoro..."
 
 # Run Python script using the venv python interpreter to read config.json, extract raw text, combine chunks, and save
-python3 -u - <<EOF
+python -u - <<EOF
 import os
 import json
 import numpy as np
