@@ -45,8 +45,8 @@ echo "Creating isolated virtual environment..."
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
 
-echo "Upgrading pip..."
-python3 -m pip install --upgrade pip --quiet
+echo "Upgrading pip and pre-installing Cython 3.x for modern NumPy header compatibility..."
+python3 -m pip install --upgrade pip "cython>=3.0" --quiet
 
 echo "Installing base packages live from PyPI..."
 python3 -m pip install torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 "weasel<0.4.0"
