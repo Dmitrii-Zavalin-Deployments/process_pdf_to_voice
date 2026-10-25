@@ -49,10 +49,19 @@ fi
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
 
-# Install Python dependencies for Kokoro AI speech synthesis
-echo "Installing Kokoro AI and audio packages..."
+# Install pinned, stable Python dependencies for Kokoro AI speech synthesis
+echo "Installing pinned stable Kokoro and NLP packages..."
 pip install --upgrade pip --quiet
-pip install -q kokoro>=0.9.2 soundfile pypdf torchaudio
+
+# Optional check: If a local vendor directory exists, install dependencies from it; otherwise use pinned stable PyPI versions
+if [ -d "./vendor" ]; then
+    echo "Installing packages from local vendor directory..."
+    pip install --no-index --find-links=./vendor -q spacy==3.7.4 misaki kokoro soundfile pypdf torchaudio
+else
+    pip install -q "spacy==3.7.4" "misaki[en]" kokoro>=0.9.2 soundfile pypdf torchaudio
+fi
+
+python3 -m spacy download en_core_web_sm --quiet
 
 # Run PDFMerge.sh if it exists to merge multiple PDFs into one
 if [ -x ./PDFMerge.sh ]; then
