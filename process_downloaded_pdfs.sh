@@ -49,7 +49,7 @@ echo "Upgrading pip..."
 pip install --upgrade pip --quiet
 
 echo "Installing stable pre-built binary wheels strictly locked to NumPy 1.26.4..."
-pip install numpy==1.26.4 spacy==3.7.5 spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer tqdm pydantic "weasel<0.4.0" torch torchaudio misaki kokoro soundfile pypdf requests dropbox
+pip install numpy==1.26.4 spacy==3.7.5 spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer tqdm pydantic jinja2 "weasel<0.4.0" torch torchaudio misaki kokoro soundfile pypdf requests dropbox
 
 echo "Installing matching spaCy model (v3.7.0)..."
 pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
@@ -59,7 +59,7 @@ echo "Cleaning old vendor wheels and harvesting fresh NumPy 1.26.4 compatible se
 rm -rf ./vendor
 mkdir -p ./vendor
 
-pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer tqdm pydantic thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
+pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer tqdm pydantic jinja2 thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
 
 # Also download the model wheel into vendor for complete air-gapped coverage
 if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
@@ -83,7 +83,7 @@ echo "Upgrading pip in clean venv..."
 pip install --upgrade pip --quiet
 
 echo "Re-installing strictly from local ./vendor/ cache..."
-pip install --no-index --find-links=./vendor/ numpy spacy spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer tqdm pydantic thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox
+pip install --no-index --find-links=./vendor/ numpy spacy spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer tqdm pydantic jinja2 thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox
 pip install --no-index --find-links=./vendor/ en_core_web_sm
 
 # Verify spaCy model loads successfully 
