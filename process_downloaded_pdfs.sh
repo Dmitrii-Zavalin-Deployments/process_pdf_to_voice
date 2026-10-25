@@ -31,44 +31,33 @@ done
 if ! command -v python3 &> /dev/null; then
     echo "Python3 is not installed. Installing Python3..."
     sudo apt-get update
-    sudo apt-get install -y python3
+    sudo apt-get install -y python3 python3-venv
 else
     echo "Python3 is already installed."
 fi
 
-# Install pip if not installed
-if ! command -v pip &> /dev/null; then
-    echo "pip is not installed. Installing pip..."
-    sudo apt-get update
-    sudo apt-get install -y python3-pip
-else
-    echo "pip is already installed."
-fi
-
 # Install system dependencies required by Kokoro (espeak-ng) and audio conversion (ffmpeg)
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
-sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
+sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv
 
-# --- 100% AIR-GAPPED OFFLINE INSTALLATION FROM VENDOR FOLDER ---
-echo "Installing Python dependencies completely offline from ./vendor..."
+# --- 100% AIR-GAPPED ISOLATED VENV & OFFLINE INSTALLATION ---
+echo "Creating isolated virtual environment to block global pollution..."
+python3 -m venv .venv
+export PATH="$(pwd)/.venv/bin:$PATH"
+
+echo "Installing Python dependencies completely offline from ./vendor into .venv..."
 python3 -m pip install --upgrade pip --quiet
 
-# Purge pre-installed runner global packages to avoid version/binary conflicts
-python3 -m pip uninstall -y numpy spacy en-core-web-sm >/dev/null 2>&1 || true
-
 if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
-    # Force lock NumPy 1.26.4 first to establish correct C-API headers
-    python3 -m pip install --no-index --find-links=./vendor -q numpy==1.26.4
-    
-    # Install the remaining offline vendor bundle
-    python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
+    # Install everything strictly from vendor wheelhouse into the isolated venv
+    python3 -m pip install --no-index --find-links=./vendor -q numpy==1.26.4 torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
 else
     echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
     exit 1
 fi
 
-# Verify spaCy model is available locally and print errors explicitly if it fails
-echo "Verifying offline spaCy model loading..."
+# Verify spaCy model is available locally inside the venv and print errors explicitly if it fails
+echo "Verifying offline spaCy model loading inside .venv..."
 if python3 -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
     echo "spaCy model 'en_core_web_sm' is verified and available locally."
 else
@@ -97,7 +86,7 @@ mkdir -p "$AUDIO_OUTPUT_DIR"
 
 echo "Converting merged PDF into natural speech audio via Kokoro..."
 
-# Run Python script to read config.json, extract raw text, combine chunks, and save
+# Run Python script using the venv python interpreter to read config.json, extract raw text, combine chunks, and save
 python3 -u - <<EOF
 import os
 import json
