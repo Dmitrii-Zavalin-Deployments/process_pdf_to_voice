@@ -22,11 +22,11 @@ jobs:
       - name: Pull Git LFS binaries
         run: git lfs pull
 
-      # Step 3: Set up Python
+      # Step 3: Set up Python 3.10
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12' # Matches the Python 3.12 wheel cache environment
+          python-version: '3.10' # Matches Python 3.10 stable binary wheels for spaCy 3.7.5
 
       # Step 4: Grant execution permissions for the shell scripts
       - name: Make scripts executable
@@ -40,7 +40,7 @@ jobs:
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
         run: ./main.sh
 
-      # Step 6: Commit and push newly harvested/compiled LFS wheels back to the repository
+      # Step 6: Commit and push newly harvested LFS wheels back to the repository
       - name: Commit and push updated vendor LFS binaries
         run: |
           git config --global user.name "github-actions[bot]"
@@ -53,6 +53,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes detected in vendor/ folder. Skipping push."
           else
-            git commit -m "chore(vendor): auto-update compiled LFS wheels from live run [skip ci]"
+            git commit -m "chore(vendor): auto-update binary wheels from live run [skip ci]"
             git push origin master
           fi
