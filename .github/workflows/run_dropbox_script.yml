@@ -8,9 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout the repository with Git LFS enabled for the vendor folder
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          lfs: true
 
       # Step 2: Set up Python
       - name: Set up Python

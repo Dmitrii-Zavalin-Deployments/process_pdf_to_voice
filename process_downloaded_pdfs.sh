@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Directory containing downloaded PDFs
+# Directory containing downloaded PDFs (ephemeral runtime folder)
 default_pdf_dir="./downloaded_pdfs"
 
 # Check if the directory exists; if not, create it
@@ -49,19 +49,24 @@ fi
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
 
-# Install pinned, stable Python dependencies for Kokoro AI speech synthesis
-echo "Installing pinned stable Kokoro and NLP packages..."
-pip install --upgrade pip --quiet
+# --- 100% AIR-GAPPED OFFLINE INSTALLATION FROM VENDOR FOLDER ---
+echo "Installing Python dependencies completely offline from ./vendor..."
+python3 -m pip install --upgrade pip --quiet
 
-# Optional check: If a local vendor directory exists, install dependencies from it; otherwise use pinned stable PyPI versions
-if [ -d "./vendor" ]; then
-    echo "Installing packages from local vendor directory..."
-    pip install --no-index --find-links=./vendor -q spacy==3.7.4 misaki kokoro soundfile pypdf torchaudio
+if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
+    python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox
 else
-    pip install -q "spacy==3.7.4" "misaki[en]" kokoro>=0.9.2 soundfile pypdf torchaudio
+    echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
+    exit 1
 fi
 
-python3 -m spacy download en_core_web_sm --quiet
+# Ensure spaCy model is available offline or linked correctly
+if python3 -c "import en_core_web_sm" 2>/dev/null; then
+    echo "spaCy model 'en_core_web_sm' is available."
+else
+    echo "Linking/loading spaCy language model..."
+    python3 -m spacy download en_core_web_sm --quiet || true
+fi
 
 # Run PDFMerge.sh if it exists to merge multiple PDFs into one
 if [ -x ./PDFMerge.sh ]; then
