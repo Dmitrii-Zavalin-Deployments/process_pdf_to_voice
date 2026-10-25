@@ -77,6 +77,7 @@ echo "Wiping virtual environment to ensure zero stale cache contamination..."
 rm -rf .venv
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
+hash -r # Refresh bash command path cache for the new venv python
 
 echo "Upgrading pip in clean venv..."
 python3 -m pip install --upgrade pip --quiet
