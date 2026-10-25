@@ -49,7 +49,10 @@ echo "Upgrading pip..."
 python3 -m pip install --upgrade pip --quiet
 
 echo "Installing packages live from PyPI to let pip resolve a working dependency tree..."
-python3 -m pip install torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
+python3 -m pip install torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox
+
+echo "Installing spaCy model en-core-web-sm..."
+python3 -m spacy download en_core_web_sm
 
 echo "========================================================="
 echo " AUDIT LOG: EXACT INSTALLED PACKAGE VERSIONS:"
