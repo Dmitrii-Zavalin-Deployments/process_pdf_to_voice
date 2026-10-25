@@ -56,16 +56,14 @@ python3 -m pip install --upgrade pip --quiet
 if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
     # Include en-core-web-sm locally from vendor folder without hitting the internet
     python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
-    
-    # Explicitly link the spaCy model shortcut name for offline loading
-    python3 -m spacy link en_core_web_sm en_core_web_sm --force --no-symlink >/dev/null 2>&1 || true
 else
     echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
     exit 1
 fi
 
-# Verify spaCy model is available locally
-if python3 -c "import spacy; nlp = spacy.load('en_core_web_sm')" 2>/dev/null; then
+# Verify spaCy model is available locally and print errors explicitly if it fails
+echo "Verifying offline spaCy model loading..."
+if python3 -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
     echo "spaCy model 'en_core_web_sm' is verified and available locally."
 else
     echo "ERROR: spaCy model 'en_core_web_sm' could not be loaded from offline vendor bundle."
