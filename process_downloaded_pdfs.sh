@@ -40,34 +40,33 @@ fi
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv
 
-# --- 100% AIR-GAPPED ISOLATED VENV & STAGED OFFLINE INSTALLATION ---
-echo "Creating isolated virtual environment to block global pollution..."
+# --- LIVE ONLINE INSTALLATION & VERSION AUDIT ---
+echo "Creating isolated virtual environment..."
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
 
-echo "Upgrading pip completely offline inside .venv..."
+echo "Upgrading pip..."
 python3 -m pip install --upgrade pip --quiet
 
-if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
-    # Step 1: Force install NumPy 1.26.4 first to lock in the 1.x C-API headers
-    python3 -m pip install --no-index --find-links=./vendor -q numpy==1.26.4
-    
-    # Step 2: Install core runtime dependencies
-    python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio pypdf requests dropbox soundfile misaki kokoro
-    
-    # Step 3: Install spacy and the model under the strict NumPy 1.x constraint boundary
-    python3 -m pip install --no-index --find-links=./vendor -q spacy==3.7.5 en-core-web-sm
-else
-    echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
-    exit 1
-fi
+echo "Installing packages live from PyPI to let pip resolve a working dependency tree..."
+python3 -m pip install torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
 
-# Verify spaCy model is available locally inside the venv and print errors explicitly if it fails
-echo "Verifying offline spaCy model loading inside .venv..."
+echo "========================================================="
+echo " AUDIT LOG: EXACT INSTALLED PACKAGE VERSIONS:"
+echo "========================================================="
+python3 -m pip list
+echo "========================================================="
+echo " AUDIT LOG: PIP FREEZE SPECIFIERS:"
+echo "========================================================="
+python3 -m pip freeze
+echo "========================================================="
+
+# Verify spaCy model loads successfully with the live-resolved packages
+echo "Verifying spaCy model loading..."
 if python3 -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
-    echo "spaCy model 'en_core_web_sm' is verified and available locally."
+    echo "spaCy model 'en_core_web_sm' loaded successfully!"
 else
-    echo "ERROR: spaCy model 'en_core_web_sm' could not be loaded from offline vendor bundle."
+    echo "ERROR: spaCy model could not be loaded."
     exit 1
 fi
 
