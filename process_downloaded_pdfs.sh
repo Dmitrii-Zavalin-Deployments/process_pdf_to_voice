@@ -41,7 +41,7 @@ echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv build-essential python3-dev
 
 # --- LIVE ONLINE INSTALLATION & BINARY WHEEL HARVESTING ---
-echo "Creating isolated virtual environment..."
+echo "Creating initial virtual environment..."
 python3 -m venv .venv
 export PATH="$(pwd)/.venv/bin:$PATH"
 
@@ -61,7 +61,7 @@ mkdir -p ./vendor
 
 python3 -m pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
 
-# Also copy the model wheel if present or download it into vendor for complete air-gapped coverage
+# Also download the model wheel into vendor for complete air-gapped coverage
 if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
     python3 -m pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/ || true
 fi
@@ -72,9 +72,16 @@ echo "========================================================="
 ls -lh ./vendor/
 echo "========================================================="
 
-# --- FORCE RE-INSTALLATION FROM LOCAL VENDOR CACHE TO GUARANTEE ZERO DRIFT ---
-echo "Re-installing strictly from local ./vendor/ cache to verify air-gapped integrity..."
-python3 -m pip uninstall -y numpy spacy thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox || true
+# --- PURGE VENV AND RE-INSTALL STRICTLY FROM LOCAL VENDOR CACHE ---
+echo "Wiping virtual environment to ensure zero stale cache contamination..."
+rm -rf .venv
+python3 -m venv .venv
+export PATH="$(pwd)/.venv/bin:$PATH"
+
+echo "Upgrading pip in clean venv..."
+python3 -m pip install --upgrade pip --quiet
+
+echo "Re-installing strictly from local ./vendor/ cache..."
 python3 -m pip install --no-index --find-links=./vendor/ numpy spacy thinc blis weasel torch torchaudio misaki kokoro soundfile pypdf requests dropbox
 python3 -m pip install --no-index --find-links=./vendor/ en_core_web_sm
 
