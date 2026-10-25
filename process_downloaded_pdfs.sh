@@ -54,18 +54,19 @@ echo "Installing Python dependencies completely offline from ./vendor..."
 python3 -m pip install --upgrade pip --quiet
 
 if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
-    python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox
+    # Include en-core-web-sm locally from vendor folder without hitting the internet
+    python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
 else
     echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
     exit 1
 fi
 
-# Ensure spaCy model is available offline or linked correctly
-if python3 -c "import en_core_web_sm" 2>/dev/null; then
-    echo "spaCy model 'en_core_web_sm' is available."
+# Verify spaCy model is available locally
+if python3 -c "import spacy; nlp = spacy.load('en_core_web_sm')" 2>/dev/null; then
+    echo "spaCy model 'en_core_web_sm' is verified and available locally."
 else
-    echo "Linking/loading spaCy language model..."
-    python3 -m spacy download en_core_web_sm --quiet || true
+    echo "ERROR: spaCy model 'en_core_web_sm' could not be loaded from offline vendor bundle."
+    exit 1
 fi
 
 # Run PDFMerge.sh if it exists to merge multiple PDFs into one

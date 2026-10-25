@@ -20,11 +20,11 @@ These assets have been vendored directly into this repository to ensure absolute
 - **License:** [BSD 3-Clause License](https://github.com/pytorch/pytorch/blob/main/LICENSE)
 - **Description:** Supplies lightweight CPU tensor execution backends and audio processing operations for local speech generation without requiring heavy NVIDIA CUDA GPU runtimes.
 
-### 3. spaCy NLP Pipeline & Dependencies
-- **Components:** `spacy` (`v3.7.4`), `en_core_web_sm`, `thinc`, `blis`, and structural tokenization utilities.
+### 3. spaCy NLP Pipeline & Linguistic Models
+- **Components:** `spacy` (`v3.7.5`), `en_core_web_sm` (`v3.7.0`), `thinc`, `blis`, `weasel`, `typer`, and structural tokenization utilities.
 - **Source:** [Explosion AI / spaCy](https://spacy.io/)
 - **License:** [MIT License](https://opensource.org/licenses/MIT)
-- **Description:** Handles linguistic sentence segmentation, text tokenization, and linguistic feature parsing for speech boundary detection.
+- **Description:** Handles linguistic sentence segmentation, text tokenization, and linguistic feature parsing for speech boundary detection completely offline.
 
 ### 4. Integration Utilities & Storage Drivers
 - **Components:** `dropbox` SDK, `requests`, `pypdf`, `soundfile`, and core helper modules.
