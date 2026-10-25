@@ -53,8 +53,14 @@ sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
 echo "Installing Python dependencies completely offline from ./vendor..."
 python3 -m pip install --upgrade pip --quiet
 
+# Purge pre-installed runner global packages to avoid version/binary conflicts
+python3 -m pip uninstall -y numpy spacy en-core-web-sm >/dev/null 2>&1 || true
+
 if [ -d "./vendor" ] && [ "$(ls -A ./vendor/*.whl 2>/dev/null)" ]; then
-    # Include en-core-web-sm locally from vendor folder without hitting the internet
+    # Force lock NumPy 1.26.4 first to establish correct C-API headers
+    python3 -m pip install --no-index --find-links=./vendor -q numpy==1.26.4
+    
+    # Install the remaining offline vendor bundle
     python3 -m pip install --no-index --find-links=./vendor -q torch torchaudio spacy misaki kokoro soundfile pypdf requests dropbox en-core-web-sm
 else
     echo "ERROR: ./vendor directory is missing or empty! Please ensure the Seagate vendor wheel folder is populated."
