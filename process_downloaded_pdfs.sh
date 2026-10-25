@@ -48,16 +48,18 @@ export PATH="$(pwd)/.venv/bin:$PATH"
 echo "Upgrading pip..."
 python3 -m pip install --upgrade pip --quiet
 
-echo "Installing stable pre-built binary wheels for Python 3.10 / NumPy 1.26.4 compatibility..."
+echo "Installing stable pre-built binary wheels strictly locked to NumPy 1.26.4..."
 python3 -m pip install numpy==1.26.4 spacy==3.7.5 "weasel<0.4.0" torch torchaudio misaki kokoro soundfile pypdf requests dropbox
 
 echo "Installing matching spaCy model (v3.7.0)..."
 python3 -m pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
 
-# --- AUTOMATED VENDOR HARVESTING ---
-echo "Harvesting all installed binary wheels into ./vendor/ for Git LFS..."
+# --- AUTOMATED VENDOR HARVESTING (CLEAN & RE-HARVEST) ---
+echo "Cleaning old vendor wheels and harvesting fresh NumPy 1.26.4 compatible set into ./vendor/..."
+rm -rf ./vendor
 mkdir -p ./vendor
-python3 -m pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy spacy thinc blis weasel --wheel-dir ./vendor/ || true
+
+python3 -m pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 thinc==8.2.5 blis==0.7.11 weasel==0.3.4 --wheel-dir ./vendor/ || true
 
 echo "========================================================="
 echo " AUDIT LOG: HARVESTED WHEELS IN ./vendor/:"
