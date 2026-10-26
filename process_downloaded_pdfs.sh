@@ -40,7 +40,7 @@ fi
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv build-essential python3-dev
 
-# --- LIVE ONLINE INSTALLATION & BINARY WHEEL HARVESTING ---
+# --- AUTOMATED DEPENDENCY RESOLUTION & VENDOR HARVESTING ---
 echo "Creating initial virtual environment..."
 python3 -m venv .venv
 source .venv/bin/activate
@@ -48,22 +48,36 @@ source .venv/bin/activate
 echo "Upgrading pip..."
 pip install --upgrade pip --quiet
 
-echo "Installing stable pre-built binary wheels strictly locked to NumPy 1.26.4..."
-pip install numpy==1.26.4 spacy==3.7.5 spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi "typer<0.10.0" click shellingham rich tqdm pydantic pydantic-core typing-extensions typing-inspection annotated-doc annotated-types jinja2 packaging langcodes "confection<1.0.0" "weasel<0.4.0" "cloudpathlib<0.17.0" torch torchaudio misaki kokoro soundfile pypdf requests dropbox
-
-echo "Installing matching spaCy model (v3.7.0)..."
-pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
-
-# --- AUTOMATED VENDOR HARVESTING (CLEAN & RE-HARVEST) ---
-echo "Cleaning old vendor wheels and harvesting fresh NumPy 1.26.4 compatible set into ./vendor/..."
+echo "Cleaning old vendor wheels..."
 rm -rf ./vendor
 mkdir -p ./vendor
 
-pip wheel --no-deps torch torchaudio misaki kokoro soundfile pypdf requests dropbox numpy==1.26.4 spacy==3.7.5 spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi "typer<0.10.0" click shellingham rich tqdm pydantic pydantic-core typing-extensions typing-inspection annotated-doc annotated-types jinja2 packaging langcodes "confection<1.0.0" thinc==8.2.5 blis==0.7.11 weasel==0.3.4 "cloudpathlib<0.17.0" --wheel-dir ./vendor/ || true
+echo "Generating top-level requirements manifest..."
+cat << 'EOF' > requirements.txt
+numpy==1.26.4
+spacy==3.7.5
+thinc==8.2.5
+weasel==0.3.4
+confection<1.0.0
+cloudpathlib<0.17.0
+typer<0.10.0
+torch
+torchaudio
+misaki
+kokoro
+soundfile
+pypdf
+requests
+dropbox
+EOF
 
-# Also download the model wheel into vendor for complete air-gapped coverage
+echo "Automatically resolving and downloading all wheels and transitive dependencies into ./vendor/..."
+pip download -r requirements.txt --wheel-dir ./vendor/
+
+# Download the matching spaCy model wheel directly into vendor for complete offline coverage
 if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
-    pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/ || true
+    echo "Downloading spaCy model wheel..."
+    pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/
 fi
 
 echo "========================================================="
@@ -82,8 +96,8 @@ source .venv/bin/activate
 echo "Upgrading pip in clean venv..."
 pip install --upgrade pip --quiet
 
-echo "Re-installing strictly from local ./vendor/ cache..."
-pip install --no-index --find-links=./vendor/ numpy spacy spacy-legacy spacy-loggers srsly catalogue murmurhash cymem preshed wasabi typer click shellingham rich tqdm pydantic pydantic-core typing-extensions typing-inspection annotated-doc annotated-types jinja2 packaging langcodes confection thinc blis weasel cloudpathlib torch torchaudio misaki kokoro soundfile pypdf requests dropbox
+echo "Re-installing strictly from local ./vendor/ cache (fully air-gapped)..."
+pip install --no-index --find-links=./vendor/ -r requirements.txt
 pip install --no-index --find-links=./vendor/ en_core_web_sm
 
 # Verify spaCy model loads successfully 
