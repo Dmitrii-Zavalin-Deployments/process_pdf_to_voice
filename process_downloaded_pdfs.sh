@@ -72,7 +72,7 @@ dropbox
 EOF
 
 echo "Automatically resolving and downloading all wheels and transitive dependencies into ./vendor/..."
-pip download -r requirements.txt --wheel-dir ./vendor/
+pip download -r requirements.txt -d ./vendor/
 
 # Download the matching spaCy model wheel directly into vendor for complete offline coverage
 if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
