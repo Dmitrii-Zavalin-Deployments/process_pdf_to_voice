@@ -158,21 +158,28 @@ for page_num, page in enumerate(reader.pages):
 
 print(f" -> Text extraction complete. Total length: {len(full_text)} characters.")
 
-# --- AUTO-DOWNLOAD KOKORO MODEL WEIGHTS INTO VENDOR CACHE IF MISSING ---
+# --- ENSURE KOKORO MODEL CACHE IS POPULATED LOCALLY ---
 os.environ["HF_HOME"] = os.path.abspath("./vendor/huggingface_cache")
 os.makedirs(os.environ["HF_HOME"], exist_ok=True)
 
+from huggingface_hub import hf_hub_download
 try:
-    from huggingface_hub import hf_hub_download
-    print(" -> Checking/downloading Kokoro model weights into vendor cache...")
+    print(" -> Verifying Kokoro model files in local vendor cache...")
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="config.json", local_files_only=True)
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v0_19.pth", local_files_only=True)
+    print(" -> All Kokoro model files found locally in cache.")
+except Exception:
+    print(" -> Model files not found in local cache. Fetching from Hub...")
+    old_offline = os.environ.pop("HF_HUB_OFFLINE", None)
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="config.json")
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v0_19.pth")
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="voices/af_heart.pt")
-except Exception as e:
-    print(f" -> Notice during model cache check (proceeding with local cache if available): {e}")
+    if old_offline:
+        os.environ["HF_HUB_OFFLINE"] = old_offline
+    print(" -> Model files successfully downloaded and cached.")
 
-print(f" -> Initializing Kokoro AI Pipeline (Lang code: {lang_code}) from local vendor cache...")
-pipeline = KPipeline(lang_code=lang_code)
+print(f" -> Initializing Kokoro AI Pipeline (Lang code: {lang_code}) from local cache...")
+pipeline = KPipeline(lang_code=lang_code, repo_id="hexgrad/Kokoro-82M")
 
 print(f" -> Generating natural audio tracks using voice '{voice}'...")
 generator = pipeline(full_text, voice=voice)
