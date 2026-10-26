@@ -158,7 +158,20 @@ for page_num, page in enumerate(reader.pages):
 
 print(f" -> Text extraction complete. Total length: {len(full_text)} characters.")
 
-print(f" -> Initializing Kokoro AI Pipeline (Lang code: {lang_code})...")
+# --- AUTO-DOWNLOAD KOKORO MODEL WEIGHTS INTO VENDOR CACHE IF MISSING ---
+os.environ["HF_HOME"] = os.path.abspath("./vendor/huggingface_cache")
+os.makedirs(os.environ["HF_HOME"], exist_ok=True)
+
+try:
+    from huggingface_hub import hf_hub_download
+    print(" -> Checking/downloading Kokoro model weights into vendor cache...")
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="config.json")
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v0_19.pth")
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="voices/af_heart.pt")
+except Exception as e:
+    print(f" -> Notice during model cache check (proceeding with local cache if available): {e}")
+
+print(f" -> Initializing Kokoro AI Pipeline (Lang code: {lang_code}) from local vendor cache...")
 pipeline = KPipeline(lang_code=lang_code)
 
 print(f" -> Generating natural audio tracks using voice '{voice}'...")
