@@ -7,7 +7,7 @@ jobs:
   execute-shell-script:
     runs-on: ubuntu-latest
     
-    # Grants GitHub Actions write permissions to push back to the repository
+    # Grants GitHub Actions permissions if needed for other tasks
     permissions:
       contents: write
 
@@ -39,20 +39,3 @@ jobs:
           APP_SECRET: ${{ secrets.APP_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
         run: ./main.sh
-
-      # Step 6: Commit and push newly harvested LFS wheels back to the repository
-      - name: Commit and push updated vendor LFS binaries
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Check if there are any changes in the vendor folder
-          git status
-          git add vendor/
-          
-          if git diff --staged --quiet; then
-            echo "No changes detected in vendor/ folder. Skipping push."
-          else
-            git commit -m "chore(vendor): auto-update binary wheels from live run [skip ci]"
-            git push origin master
-          fi

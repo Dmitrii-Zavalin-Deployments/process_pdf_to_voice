@@ -40,69 +40,50 @@ fi
 echo "Installing system dependencies (espeak-ng, ffmpeg)..."
 sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg python3-venv build-essential python3-dev
 
-# --- AUTOMATED DEPENDENCY RESOLUTION & VENDOR HARVESTING ---
-echo "Creating initial virtual environment..."
+# --- AIR-GAPPED OFFLINE INSTALLATION FROM LOCAL VENDOR CACHE ---
+echo "Creating virtual environment..."
 python3 -m venv .venv
 source .venv/bin/activate
 
 echo "Upgrading pip..."
-pip install --upgrade pip --quiet
+python3 -m pip install --upgrade pip --quiet
 
-echo "Cleaning old vendor wheels..."
-rm -rf ./vendor
-mkdir -p ./vendor
-
-echo "Generating top-level requirements manifest..."
-cat << 'EOF' > requirements.txt
-numpy==1.26.4
-spacy==3.7.5
-thinc==8.2.5
-weasel==0.3.4
-confection<1.0.0
-cloudpathlib<0.17.0
-typer<0.10.0
-torch
-torchaudio
-misaki
-kokoro
-soundfile
-pypdf
-requests
-dropbox
-EOF
-
-echo "Automatically resolving and downloading all wheels and transitive dependencies into ./vendor/..."
-pip download -r requirements.txt -d ./vendor/
-
-# Download the matching spaCy model wheel directly into vendor for complete offline coverage
-if [ ! -f "./vendor/en_core_web_sm-3.7.0-py3-none-any.whl" ]; then
-    echo "Downloading spaCy model wheel..."
-    pip download --no-deps https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl -d ./vendor/
+echo "Verifying local vendor cache..."
+if [ ! -d "./vendor" ] || [ -z "$(ls -A ./vendor)" ]; then
+    echo "ERROR: The ./vendor/ directory is missing or empty!"
+    exit 1
 fi
 
 echo "========================================================="
-echo " AUDIT LOG: HARVESTED WHEELS IN ./vendor/:"
+echo " AUDIT LOG: INSTALLING STRICTLY FROM LOCAL ./vendor/:"
 echo "========================================================="
 ls -lh ./vendor/
 echo "========================================================="
 
-# --- PURGE VENV AND RE-INSTALL STRICTLY FROM LOCAL VENDOR CACHE ---
-echo "Wiping virtual environment to ensure zero stale cache contamination..."
-deactivate || true
-rm -rf .venv
-python3 -m venv .venv
-source .venv/bin/activate
+echo "Installing all dependencies strictly offline from ./vendor/..."
+python3 -m pip install --no-index --find-links=./vendor/ \
+    numpy==1.26.4 \
+    spacy==3.7.5 \
+    thinc==8.2.5 \
+    weasel==0.3.4 \
+    confection==0.1.5 \
+    cloudpathlib==0.16.0 \
+    typer==0.9.4 \
+    torch \
+    torchaudio \
+    misaki \
+    kokoro \
+    soundfile \
+    pypdf \
+    requests \
+    dropbox
 
-echo "Upgrading pip in clean venv..."
-pip install --upgrade pip --quiet
-
-echo "Re-installing strictly from local ./vendor/ cache (fully air-gapped)..."
-pip install --no-index --find-links=./vendor/ -r requirements.txt
-pip install --no-index --find-links=./vendor/ en_core_web_sm
+echo "Installing local spaCy model..."
+python3 -m pip install --no-index --find-links=./vendor/ en_core_web_sm
 
 # Verify spaCy model loads successfully 
 echo "Verifying spaCy model loading..."
-if python -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
+if python3 -c "import spacy; import en_core_web_sm; nlp = en_core_web_sm.load()"; then
     echo "spaCy model 'en_core_web_sm' loaded successfully!"
 else
     echo "ERROR: spaCy model could not be loaded."
@@ -131,7 +112,7 @@ mkdir -p "$AUDIO_OUTPUT_DIR"
 echo "Converting merged PDF into natural speech audio via Kokoro..."
 
 # Run Python script using the venv python interpreter to read config.json, extract raw text, combine chunks, and save
-python -u - <<EOF
+python3 -u - <<EOF
 import os
 import json
 import numpy as np
