@@ -166,13 +166,13 @@ from huggingface_hub import hf_hub_download
 try:
     print(" -> Verifying Kokoro model files in local vendor cache...")
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="config.json", local_files_only=True)
-    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v0_19.pth", local_files_only=True)
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v1_0.pth", local_files_only=True)
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="voices/af_heart.pt", local_files_only=True)
     print(" -> All Kokoro model files found locally in cache.")
 except Exception:
     print(" -> Model files not found in local cache. Fetching from Hub...")
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="config.json")
-    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v0_19.pth")
+    hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="kokoro-v1_0.pth")
     hf_hub_download(repo_id="hexgrad/Kokoro-82M", filename="voices/af_heart.pt")
     print(" -> Model files successfully downloaded and cached.")
 
