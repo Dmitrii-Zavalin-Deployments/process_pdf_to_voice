@@ -148,3 +148,9 @@ Below is the complete inventory of all harvested wheels located in `vendor/` alo
 All bundled vendor components are distributed under their respective permissive open-source licenses (**Apache License 2.0**, **MIT**, **BSD 3-Clause**, and **PSF**). 
 
 Unless required by applicable law or agreed to in writing, software distributed under the `vendor/` directory is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+### 5. Hugging Face Model Weights & Voice Checkpoints
+- **Components:** `config.json`, `kokoro-v1_0.pth` (Neural Model Weights), and `voices/af_heart.pt` (Voice Style Checkpoint).
+- **Source:** [Hexgrad / Kokoro-82M on Hugging Face Hub](https://huggingface.co/hexgrad/Kokoro-82M)
+- **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- **Description:** Pre-cached neural text-to-speech architecture weights and voice embedding profiles stored locally in `vendor/huggingface_cache/` (tracked via Git LFS) to enable 100% offline, air-gapped synthesis execution without external runtime hub lookups.
