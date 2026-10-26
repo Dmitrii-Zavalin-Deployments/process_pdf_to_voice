@@ -32,13 +32,12 @@ jobs:
       - name: Make scripts executable
         run: chmod +x ./main.sh ./process_downloaded_pdfs.sh ./PDFMerge.sh
 
-      # Step 5: Run the main.sh script with local Hugging Face cache routing
+      # Step 5: Run the main.sh script with local Hugging Face cache routing (offline toggle removed for initial caching)
       - name: Run main.sh
         env:
           APP_KEY: ${{ secrets.APP_KEY }}
           APP_SECRET: ${{ secrets.APP_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
-          HF_HUB_OFFLINE: "1"
           HF_HOME: ${{ github.workspace }}/vendor/huggingface_cache
         run: ./main.sh
 
