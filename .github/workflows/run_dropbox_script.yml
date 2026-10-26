@@ -7,7 +7,7 @@ jobs:
   execute-shell-script:
     runs-on: ubuntu-latest
     
-    # Grants GitHub Actions write permissions to push back to the repository
+    # Grants GitHub Actions permissions if needed for other tasks
     permissions:
       contents: write
 
@@ -32,31 +32,12 @@ jobs:
       - name: Make scripts executable
         run: chmod +x ./main.sh ./process_downloaded_pdfs.sh ./PDFMerge.sh
 
-      # Step 5: Run the main.sh script with local Hugging Face cache routing (offline toggle removed for initial caching)
+      # Step 5: Run the main.sh script with strict offline Hugging Face routing
       - name: Run main.sh
         env:
           APP_KEY: ${{ secrets.APP_KEY }}
           APP_SECRET: ${{ secrets.APP_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+          HF_HUB_OFFLINE: "1"
           HF_HOME: ${{ github.workspace }}/vendor/huggingface_cache
         run: ./main.sh
-
-      # Step 6: Commit and push newly populated Kokoro LFS model cache back to the repository
-      - name: Commit and push updated Hugging Face LFS cache
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Ensure Git LFS tracks the huggingface cache files
-          git lfs track "vendor/huggingface_cache/**"
-          git add .gitattributes
-          
-          git status
-          git add vendor/huggingface_cache/
-          
-          if git diff --staged --quiet; then
-            echo "No changes detected in Hugging Face model cache. Skipping push."
-          else
-            git commit -m "chore(lfs): auto-commit downloaded Kokoro model cache [skip ci]"
-            git push origin HEAD:master
-          fi
